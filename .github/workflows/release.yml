@@ -1,0 +1,76 @@
+name: Release @aihu/runtime
+
+on:
+  push:
+    tags:
+      - 'runtime-v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check npm trusted publishing prerequisites
+        run: |
+          node -e "const [major, minor] = process.versions.node.split('.').map(Number); if (major < 22 || (major === 22 && minor < 14)) process.exit(1)"
+          node -e "const [major, minor, patch] = require('child_process').execFileSync('npm', ['--version'], {encoding: 'utf8'}).trim().split('.').map(Number); if (!(major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1))))) process.exit(1)"
+      - name: Check exact tag and default branch head
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          test "$GITHUB_REF_NAME" = "runtime-v$version"
+          test "$GITHUB_REF_TYPE" = tag
+          git fetch origin main --depth=1
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Build package explicitly
+        run: npm run build
+      - name: Typecheck and test package
+        run: |
+          npm run typecheck
+          npm test
+          npm run test:release-contract
+      - name: Check release contract
+        run: npm run release:contract
+      - name: Verify target version is unpublished (E404 only)
+        run: |
+          set +e
+          output="$(npm view "$(node -p "require('./package.json').name")@$(node -p "require('./package.json').version")" version 2>&1)"
+          status=$?
+          set -e
+          test "$status" -ne 0
+          printf '%s\n' "$output" | grep -qx 'npm error code E404'
+      - name: Pack one exact allowlisted tarball
+        id: pack
+        run: |
+          pack_dir="$RUNNER_TEMP/aihu-runtime-pack"
+          mkdir -p "$pack_dir"
+          test -z "$(find "$pack_dir" -mindepth 1 -maxdepth 1 -print -quit)"
+          npm pack --ignore-scripts --pack-destination "$pack_dir" > "$RUNNER_TEMP/pack-output.txt"
+          tgz="$(find "$pack_dir" -type f -name '*.tgz' -print)"
+          test "$(printf '%s\n' "$tgz" | wc -l | tr -d ' ')" -eq 1
+          echo "tgz=$tgz" >> "$GITHUB_OUTPUT"
+          node scripts/release-contract.mjs --tarball="$tgz"
+      - name: Verify exact tarball in a normal isolated consumer
+        env:
+          TGZ: ${{ steps.pack.outputs.tgz }}
+        run: |
+          consumer="$RUNNER_TEMP/aihu-runtime-consumer"
+          mkdir -p "$consumer"
+          npm init --yes --prefix "$consumer"
+          npm install --prefix "$consumer" "$TGZ" @aihu/arbor@^4.1.2 @aihu/signals@^0.5.1 @aihu/context@^0.2.0
+          (cd "$consumer" && CONSUMER_ROOT="$consumer" node --input-type=module --eval "import { realpathSync } from 'node:fs'; import { fileURLToPath } from 'node:url'; import { sep } from 'node:path'; const root = realpathSync(process.env.CONSUMER_ROOT); for (const name of ['@aihu/runtime', '@aihu/runtime/app', '@aihu/runtime/ssr']) { const url = await import.meta.resolve(name); const file = realpathSync(fileURLToPath(url)); if (!file.startsWith(root + sep)) throw new Error(name + ' resolved outside isolated consumer: ' + file); console.log(name + ' -> ' + file); } const runtime = await import('@aihu/runtime'); const bridge = await import('@aihu/runtime/app'); const ssr = await import('@aihu/runtime/ssr'); if (typeof runtime.defineComponent !== 'function' || typeof bridge._setMount !== 'function' || typeof ssr.__aihu_schild !== 'function') process.exit(1)")
+      - name: Publish the exact verified tarball with provenance
+        env:
+          TGZ: ${{ steps.pack.outputs.tgz }}
+        run: npm publish "$TGZ" --access public --provenance

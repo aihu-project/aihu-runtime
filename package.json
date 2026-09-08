@@ -1,6 +1,6 @@
 {
   "name": "@aihu/runtime",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -29,25 +29,50 @@
   "scripts": {
     "build": "rolldown -c",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "bun run build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:release-contract": "node scripts/injected-dist-regression.mjs && node scripts/npm-credential-regression.mjs",
+    "release:contract": "node scripts/release-contract.mjs",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@aihu/primitives": "workspace:^"
+    "@aihu/primitives": "^0.2.3"
   },
   "peerDependencies": {
     "@aihu/arbor": "^4.1.2",
     "@aihu/signals": "^0.5.1",
-    "@aihu/context": "workspace:^"
+    "@aihu/context": "^0.2.0"
   },
-  "description": "Single File Component (.aihu) runtime \u2014 registers custom elements compiled by @aihu/compiler.",
+  "devDependencies": {
+    "@aihu/arbor": "^4.1.2",
+    "@aihu/compiler": "^1.3.6",
+    "@aihu/context": "^0.2.0",
+    "@aihu/css-engine": "^0.6.1",
+    "@aihu/primitives": "^0.2.3",
+    "@aihu/signals": "^0.5.1",
+    "@types/node": "^20.16.5",
+    "jsdom": "^25.0.1",
+    "rolldown": "^1.0.0-rc.17",
+    "rolldown-plugin-dts": "^0.23.2",
+    "typescript": "^5.6.2",
+    "vite": "^8.0.16",
+    "vitest": "^3.2.6"
+  },
+  "description": "Single File Component (.aihu) runtime — registers custom elements compiled by @aihu/compiler.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aihu-project/aihu.git",
-    "directory": "packages/runtime"
+    "url": "git+https://github.com/aihu-project/aihu-runtime.git"
   },
-  "homepage": "https://github.com/aihu-project/aihu/tree/main/packages/runtime#readme",
-  "bugs": "https://github.com/aihu-project/aihu/issues",
+  "homepage": "https://github.com/aihu-project/aihu-runtime#readme",
+  "bugs": {
+    "url": "https://github.com/aihu-project/aihu-runtime/issues"
+  },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": ""
 }

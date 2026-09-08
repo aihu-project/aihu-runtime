@@ -50,12 +50,12 @@ import { hydrate } from '@aihu/arbor/hydrate'
 import { aihuCompilerPlugin } from '@aihu/compiler'
 import { signal } from '@aihu/signals'
 import { afterAll, describe, expect, it } from 'vitest'
-import { resolvePublishedCompilerBinary } from '../../../scripts/lib/compiler-binary.ts'
+import { resolvePublishedCompilerBinary } from './published-compiler.ts'
 import { _setHydrate, _setMount, _setSignal } from '../src/define-component.ts'
 import type { SsrChildModule, SsrChildRenderOpts } from '../src/ssr-string.ts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const repoRoot = resolve(__dirname, '../../..')
+const repoRoot = resolve(__dirname, '..')
 
 // Pin the compile backend to the CLI binary (see the module docblock). Set
 // before the first `transform`, which is when the backend is resolved.
@@ -96,8 +96,8 @@ function resolveImports(code: string): string {
     .split('\n')
     .filter((l) => !l.includes('virtual:aihu-utility'))
     .join('\n')
-    .replaceAll('"@aihu/runtime/ssr"', `"${repoRoot}/packages/runtime/src/ssr-string.ts"`)
-    .replaceAll('"@aihu/runtime"', `"${repoRoot}/packages/runtime/src/index.ts"`)
+    .replaceAll('"@aihu/runtime/ssr"', `"${repoRoot}/src/ssr-string.ts"`)
+    .replaceAll('"@aihu/runtime"', `"${repoRoot}/src/index.ts"`)
 }
 
 /**

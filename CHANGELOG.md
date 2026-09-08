@@ -1,5 +1,13 @@
 # @aihu/runtime
 
+## 6.1.1
+
+### Patch Changes
+
+- Extract `@aihu/runtime` into the standalone `aihu-project/aihu-runtime`
+  repository. Published dependency ranges replace the former workspace edges,
+  and the explicit `@aihu/runtime/app` bridge is tested as a package boundary.
+
 ## 6.1.0
 
 ### Minor Changes

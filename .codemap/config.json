@@ -1,0 +1,28 @@
+{
+  "only": ["ts", "mjs", "js", "json", "yml", "yaml", "md"],
+  "exclude": ["node_modules", "dist", "coverage", "pack", "tests/.scratch-ssr-child-adoption"],
+  "depth": 4,
+  "budgets": {},
+  "routing": {
+    "subsystems": [
+      {
+        "name": "app-bridge-boundary",
+        "paths": ["src/app.ts", "package.json", "tests/app-bridge.test.ts", "tests/fixtures/app-consumer/client.ts"],
+        "keywords": ["@aihu/runtime/app", "_setHydrate", "_setMount", "_setSignal", "_withOwnerContext"],
+        "docs": ["README.md"],
+        "note": "The app subpath is a string-based package boundary: import resolution cannot show that the consumer must use the named bridge instead of the runtime barrel or source tree. The fixture test is the executable guard."
+      },
+      {
+        "name": "release-artifact-boundary",
+        "paths": ["package.json", "scripts/release-contract.mjs", ".github/workflows/release.yml"],
+        "keywords": ["--provenance", "id-token: write", "workspace:", "runtime-v"],
+        "docs": ["README.md"],
+        "note": "The package manifest, release script, and workflow form a non-imported contract for the exact published artifact; Codemap cannot follow CI strings or tarball allowlists."
+      }
+    ]
+  },
+  "drift": {
+    "require_docs_for": ["app-bridge-boundary", "release-artifact-boundary"]
+  },
+  "guidance": {}
+}
