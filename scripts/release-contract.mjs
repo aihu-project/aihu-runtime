@@ -43,8 +43,9 @@ for (const path of ['./dist/index.js', './dist/index.d.ts', './dist/ssr-string.j
 
 for (const key of Object.keys(process.env)) {
   const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, '')
-  if ((normalized.includes('npm') || normalized.includes('node')) && (normalized.includes('auth') || normalized.includes('token'))) {
-    fail(`classic npm token environment variable is set: ${key}`)
+  const isNpmCredential = ['auth', 'token', 'username', 'password', 'email', 'certfile', 'keyfile'].some((term) => normalized.includes(term))
+  if ((normalized.includes('npm') || normalized.includes('node')) && isNpmCredential) {
+    fail(`classic npm credential environment variable is set: ${key}`)
   }
 }
 const configPaths = new Set([join(root, '.npmrc')])
@@ -57,7 +58,9 @@ try {
 for (const configPath of configPaths) {
   if (!configPath || !existsSync(configPath)) continue
   const content = readFileSync(configPath, 'utf8')
-  assert(!/(^|\n)\s*(?:\/\/[^\n:]+:)?(?:_authToken|_auth|authToken)\s*=/im.test(content), `classic npm auth config entry found in ${configPath}`)
+  const legacyCredential = '(?:_authToken|_auth|authToken|username|_password|password|email|certfile|keyfile)'
+  const scopedPrefix = '(?:(?:\/\/[^\n=]+|@[^\n=]+):)?'
+  assert(!new RegExp(`(^|\\n)\\s*${scopedPrefix}${legacyCredential}\\s*=`, 'im').test(content), `classic npm credential config entry found in ${configPath}`)
   assert(!/(^|\n)\s*(?:npm[-_.])?token\s*=/im.test(content), `classic npm token config entry found in ${configPath}`)
 }
 

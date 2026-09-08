@@ -31,7 +31,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:release-contract": "node scripts/injected-dist-regression.mjs",
+    "test:release-contract": "node scripts/injected-dist-regression.mjs && node scripts/npm-credential-regression.mjs",
     "release:contract": "node scripts/release-contract.mjs",
     "prepublishOnly": "npm run build"
   },
