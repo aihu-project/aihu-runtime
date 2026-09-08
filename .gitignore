@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.npm/
+pack/
+tests/.scratch-ssr-child-adoption/
+.codemap/*
+!.codemap/config.json

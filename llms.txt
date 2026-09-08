@@ -1,6 +1,6 @@
 # @aihu/runtime
 
-`@aihu/runtime` is the glue layer that bridges the aihu compiler output to the browser's Custom Elements API. It provides `defineComponent()` and `defineElement()` — the two Custom Element class factories — along with `onMount` / `onCleanup` lifecycle hooks and accessibility helpers (`announce`, `createFocusTrap`).
+`@aihu/runtime` is the glue layer that bridges `@aihu/compiler` output to the browser's Custom Elements API. It provides `defineComponent()` and `defineElement()` — the two Custom Element class factories — along with `onMount` / `onCleanup` lifecycle hooks, accessibility helpers, SSR helpers, and the explicit `@aihu/runtime/app` integration bridge.
 
 The package ships as ≤ 2.9 kB gzipped. Each compiled `.aihu` SFC is lowered to a `defineComponent()` or `defineElement()` call; consumers do not import `@aihu/runtime` directly in application code.
 
