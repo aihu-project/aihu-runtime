@@ -23,9 +23,7 @@ jobs:
       - name: Check npm trusted publishing prerequisites
         run: |
           node -e "const [major, minor] = process.versions.node.split('.').map(Number); if (major < 22 || (major === 22 && minor < 14)) process.exit(1)"
-          npm_major="$(npm --version | cut -d. -f1)"
-          npm_minor="$(npm --version | cut -d. -f2)"
-          test "$npm_major" -gt 11 || { test "$npm_major" -eq 11 && test "$npm_minor" -ge 5; }
+          node -e "const [major, minor, patch] = require('child_process').execFileSync('npm', ['--version'], {encoding: 'utf8'}).trim().split('.').map(Number); if (!(major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1))))) process.exit(1)"
       - name: Check exact tag and default branch head
         run: |
           version="$(node -p "require('./package.json').version")"
@@ -41,6 +39,7 @@ jobs:
         run: |
           npm run typecheck
           npm test
+          npm run test:release-contract
       - name: Check release contract
         run: npm run release:contract
       - name: Verify target version is unpublished (E404 only)
@@ -70,7 +69,7 @@ jobs:
           mkdir -p "$consumer"
           npm init --yes --prefix "$consumer"
           npm install --prefix "$consumer" "$TGZ" @aihu/arbor@^4.1.2 @aihu/signals@^0.5.1 @aihu/context@^0.2.0
-          node --input-type=module --eval "const runtime = await import('@aihu/runtime'); const bridge = await import('@aihu/runtime/app'); if (typeof runtime.defineComponent !== 'function' || typeof bridge._setMount !== 'function') process.exit(1)"
+          (cd "$consumer" && CONSUMER_ROOT="$consumer" node --input-type=module --eval "import { realpathSync } from 'node:fs'; import { fileURLToPath } from 'node:url'; import { sep } from 'node:path'; const root = realpathSync(process.env.CONSUMER_ROOT); for (const name of ['@aihu/runtime', '@aihu/runtime/app', '@aihu/runtime/ssr']) { const url = await import.meta.resolve(name); const file = realpathSync(fileURLToPath(url)); if (!file.startsWith(root + sep)) throw new Error(name + ' resolved outside isolated consumer: ' + file); console.log(name + ' -> ' + file); } const runtime = await import('@aihu/runtime'); const bridge = await import('@aihu/runtime/app'); const ssr = await import('@aihu/runtime/ssr'); if (typeof runtime.defineComponent !== 'function' || typeof bridge._setMount !== 'function' || typeof ssr.__aihu_schild !== 'function') process.exit(1)")
       - name: Publish the exact verified tarball with provenance
         env:
           TGZ: ${{ steps.pack.outputs.tgz }}

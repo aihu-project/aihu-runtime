@@ -25,5 +25,7 @@ jobs:
         run: npm run typecheck
       - name: Test package
         run: npm test
+      - name: Test injected dist regression
+        run: npm run test:release-contract
       - name: Check release contract
         run: npm run release:contract

@@ -31,6 +31,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:release-contract": "node scripts/injected-dist-regression.mjs",
     "release:contract": "node scripts/release-contract.mjs",
     "prepublishOnly": "npm run build"
   },
@@ -63,8 +64,15 @@
     "url": "git+https://github.com/aihu-project/aihu-runtime.git"
   },
   "homepage": "https://github.com/aihu-project/aihu-runtime#readme",
-  "bugs": "https://github.com/aihu-project/aihu-runtime/issues",
+  "bugs": {
+    "url": "https://github.com/aihu-project/aihu-runtime/issues"
+  },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": ""
 }

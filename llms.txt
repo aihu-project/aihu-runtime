@@ -49,7 +49,7 @@ defineComponent(({ element }) => {
 `@aihu/app` does this automatically. Only do it manually in non-standard embedding:
 
 ```ts
-import { _setMount, _setSignal } from '@aihu/runtime'
+import { _setMount, _setSignal } from '@aihu/runtime/app'
 import { mount } from '@aihu/arbor'
 import { signal } from '@aihu/signals'
 
@@ -128,8 +128,9 @@ Any resource acquired in `onMount` must be released in `onCleanup` or the return
 
 ## Canonical example files
 
-- `packages/runtime/src/index.ts` — public API exports
-- `packages/runtime/src/define-component.ts` — `defineComponent()` implementation
-- `packages/runtime/src/define-element.ts` — `defineElement()` with attribute reflection
-- `packages/runtime/src/a11y.ts` — `announce()` and `createFocusTrap()`
-- `packages/app/src/client.ts` — `_setMount`/`_setSignal` wiring in `createApp()`
+- `src/index.ts` — public API exports
+- `src/define-component.ts` — `defineComponent()` implementation
+- `src/define-element.ts` — `defineElement()` with attribute reflection
+- `src/a11y.ts` — `announce()` and `createFocusTrap()`
+- `src/app.ts` — explicit `_setMount`/`_setSignal` app integration bridge
+- `tests/fixtures/app-consumer/client.ts` — consumer boundary fixture
