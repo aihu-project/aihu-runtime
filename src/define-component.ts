@@ -608,6 +608,19 @@ export function defineComponent(setupOrOptions: Setup | ComponentOptions): typeo
             // after them) and reinsert at the <slot> position after mount.
             // Shadow-DOM path is untouched (`host !== this`). A marked host is
             // exempt: its children are the server template, not slot content.
+            //
+            // That exemption is safe today for a reason narrower than "usually
+            // true": `__aihu_schild` (ssr-string.ts) is the SINGLE place a
+            // resolved child is serialized — shared by the compiled string
+            // renderer and `@aihu/server`'s own tree walker — and its SCOPE (v1)
+            // contract only emits a child call (and therefore only stamps
+            // ADOPT_ATTR) for a reference site with NO children. A reference
+            // that carries slot content always falls back to the bare, unmarked
+            // element instead, so a host can never arrive here BOTH marked and
+            // carrying external slot content — it is unreachable, not just
+            // unlikely (issue #2 / aihu#477 audit). If child SSR ever grows
+            // prop/slot forwarding at the reference site, this exemption must be
+            // revisited alongside it.
             const isLightDom = isReal && this.shadowRoot === null
             const lightDomChildren: ChildNode[] | null =
               isLightDom && !ssrTemplate ? Array.from(this.childNodes) : null
