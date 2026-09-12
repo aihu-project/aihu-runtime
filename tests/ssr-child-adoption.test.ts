@@ -502,6 +502,13 @@ describe('raw on a child reference: both sides drop the written children', () =>
     // the reference declines and the child is NOT rendered.
     expect(html).not.toContain('KID-CONTENT')
     expect(html).toContain('WRITTEN')
+    // Issue #2 / aihu#477 audit: a declined reference must never carry the
+    // adoption marker either. `data-aihu-ssr` on an unresolved host would
+    // make `define-component.ts`'s connectedCallback treat WRITTEN — real
+    // external slot content — as the component's own server template and
+    // adopt over it without ever slot-projecting. It must stay absent so the
+    // host upgrades through the ordinary mount+carve (Bug D) path instead.
+    expect(html).not.toContain('data-aihu-ssr')
 
     const container = detachedFrom(html)
     hydrate(parent.__ssr, container, {})
