@@ -457,7 +457,19 @@ function _markSlotted(c: ChildNode): void {
   if (c.nodeType === 1 /* ELEMENT_NODE */) (c as Element).setAttribute('data-aihu-slotted', '')
 }
 
-function _projectLightDomSlot(host: HTMLElement, children: ChildNode[]): void {
+/**
+ * Carve-and-reinsert primitive for Bug D light-DOM `<slot>` projection.
+ * Exported (not just called internally, from `connectedCallback` above) so
+ * `@aihu/arbor`'s top-level `hydrate()` walk (`packages/arbor/src/hydrate.ts`
+ * in the `aihu-dom` repo) can reuse the exact same routing logic for the
+ * page-level hydrate path, which does not go through a component's own
+ * `connectedCallback` and today has no slot-projection handling at all — see
+ * aihu-runtime#4. Callers own the carve-before-build/adopt sequencing
+ * themselves: capture the host's original children BEFORE the new subtree is
+ * built or adopted onto it, then call this AFTER, exactly as the two call
+ * sites below do.
+ */
+export function _projectLightDomSlot(host: HTMLElement, children: ChildNode[]): void {
   if (children.length === 0) return
   const slots = Array.from(host.querySelectorAll('slot'))
   if (slots.length === 0) {
