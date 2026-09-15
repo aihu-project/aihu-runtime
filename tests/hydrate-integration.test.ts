@@ -335,6 +335,44 @@ describe('First-render adoption — _build() and renderer choice', () => {
     el.remove()
   })
 
+  // ── T-A7: a MARKED host with its own <slot> never carves/projects ─────────
+  // Issue #2 / aihu#477 audit: the theoretical gap was a marked (adopted)
+  // host whose layout declares a <slot> ALSO carrying external slot content a
+  // parent placed into it — since `lightDomChildren` is only captured when
+  // `!ssrTemplate`, that content would never reach `_projectLightDomSlot`.
+  // This is the contrast case for T-A6 (same layout shape, marked instead of
+  // unmarked): it pins that the adopt branch really does skip the carve step
+  // entirely — the pre-existing children are left exactly where they were,
+  // and the layout (with its <slot> placeholder) is never even built, since
+  // `_hydrate` — not `_mount` — owns rendering here. Determined unreachable
+  // today (see the comment above `lightDomChildren` in connectedCallback):
+  // `__aihu_schild` (ssr-string.ts) never stamps ADOPT_ATTR on a reference
+  // site that carries slot content, so a real server render can never
+  // produce this combination — this test only pins what the code does IF it
+  // ever did.
+  it('T-A7: a marked host with a <slot> layout leaves pre-existing children untouched (no carve, no build)', () => {
+    _setHydrate(vi.fn().mockReturnValue(fakeScope()) as Parameters<typeof _setHydrate>[0])
+    _setMount(mount)
+
+    const tag = nextTag()
+    const Cmp = defineComponent((_ctx: SetupContext) =>
+      branch('div', { class: 'layout' }, [
+        branch('slot', undefined, []) as unknown as ReturnType<typeof leaf>,
+      ]),
+    )
+    defineElement(tag, Cmp, { shadowMode: 'light' })
+
+    const el = serverRenderedEl(tag, '<span>hypothetical-slot-content</span>')
+    document.body.appendChild(el)
+
+    // No carve: the span is still a direct child, not projected into `.layout`.
+    expect(el.querySelector('.layout')).toBeNull()
+    expect(el.children.length).toBe(1)
+    expect(el.children[0]?.tagName).toBe('SPAN')
+    expect(el.textContent).toBe('hypothetical-slot-content')
+    el.remove()
+  })
+
   // ── connectedCallback still works normally after the refactor ─────────────
   it('normal mount path still produces reactive DOM after the _build() refactor', () => {
     _setMount(mount)
