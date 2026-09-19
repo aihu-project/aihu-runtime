@@ -37,6 +37,9 @@ export {
 export { defineElement } from './define-element.ts'
 /** @internal */
 export { _hydrateOnVisible } from './hydrate-on-visible.ts'
+// v0.6.0 L1 — shared adoptedStyleSheets aggregation/dedup (aihu-runtime#9).
+/** @internal */
+export { _adoptStyleSheet } from './style-sheet-cache.ts'
 export type { ResourceHandle } from './resource.ts'
 // createResource: async-resource primitive for the plain `$resource` collection.
 export { createResource } from './resource.ts'
