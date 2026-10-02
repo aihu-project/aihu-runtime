@@ -23,7 +23,7 @@ for (const group of ['dependencies', 'devDependencies', 'optionalDependencies', 
   }
 }
 assert(manifest.name === '@aihu/runtime', 'package name must remain @aihu/runtime')
-assert(manifest.version === '6.1.1', `expected prepared patch version 6.1.1, got ${manifest.version}`)
+assert(manifest.version === '6.2.0', `expected prepared version 6.2.0, got ${manifest.version}`)
 assert(JSON.stringify(manifest.files) === JSON.stringify(['dist', 'README.md', 'LICENSE']), 'files allowlist changed')
 assert(manifest.exports?.['.']?.import === './dist/index.js', 'root import export is invalid')
 assert(manifest.exports?.['./ssr']?.import === './dist/ssr-string.js', 'SSR import export is invalid')
