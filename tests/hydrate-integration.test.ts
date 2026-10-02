@@ -19,6 +19,7 @@
  */
 
 import { branch, leaf, mount } from '@aihu/arbor'
+import { hydrate } from '@aihu/arbor/hydrate'
 import { signal } from '@aihu/signals'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -28,6 +29,7 @@ import {
   defineComponent,
   _onMount as onMount,
 } from '../src/define-component.ts'
+import { _ssrChildWrap, type SsrChildModule } from '../src/ssr-string.ts'
 import { defineElement } from '../src/define-element.ts'
 import type { SetupContext } from '../src/types.ts'
 
@@ -391,5 +393,37 @@ describe('First-render adoption — _build() and renderer choice', () => {
     expect(p?.textContent).toBe('updated')
 
     el.remove()
+  })
+})
+
+describe('First-render adoption — light-DOM slot projection through top-level hydrate', () => {
+  it('projects original light children after adopting server output', () => {
+    const tag = nextTag()
+    const module: SsrChildModule = { __ssrString: () => '', __aihu_shadow__: 'light' }
+    const serverHtml = _ssrChildWrap(
+      tag,
+      '',
+      module,
+      '<h1 slot="header">Title</h1><main data-aihu-path="0"><slot data-aihu-path="0.0" name="header"><b>Fallback</b></slot></main>',
+      true,
+    )
+    const parsed = document.createElement('div')
+    parsed.innerHTML = serverHtml
+    const host = parsed.firstElementChild as HTMLElement
+    const Component = defineComponent(() =>
+      branch('main', undefined, [branch('slot', { name: 'header' }, [branch('b', undefined, [leaf('Fallback')])])]),
+    )
+    defineElement(tag, Component, { shadowMode: 'light' })
+    _setHydrate(hydrate)
+
+    document.body.appendChild(host)
+
+    expect(host.querySelector('slot')).toBeNull()
+    expect(host.querySelectorAll('h1[slot="header"]')).toHaveLength(1)
+    expect(host.querySelector('main')?.textContent).toBe('Title')
+    expect(host.textContent).toBe('Title')
+
+    host.remove()
+    _setHydrate(null)
   })
 })

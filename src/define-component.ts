@@ -44,6 +44,7 @@ type HydrateFn = (
   component: () => ReturnType<Setup>,
   host: Element | ShadowRoot,
   snapshot: Record<string, unknown>,
+  options?: Parameters<MountFn>[2],
 ) => ReturnType<MountFn>
 
 let _mount: MountFn | null = null
@@ -108,10 +109,21 @@ function _adoptSsrTemplate(
   el: HTMLElement,
   tree: ReturnType<Setup>,
   container: Element | ShadowRoot,
+  lc: _LC,
 ): _ScopeRef {
   const state = (globalThis as { __aihu_state__?: Record<string, unknown> }).__aihu_state__
   const snapshot = (state?.[el.tagName.toLowerCase()] as Record<string, unknown> | undefined) ?? {}
-  const inner = _hydrate!(() => tree, container, snapshot)
+  const inner = _hydrate!(
+    () => tree,
+    container,
+    snapshot,
+    {
+      ...(container === el
+        ? { projectLightDomSlot: (_host, children) => _projectLightDomSlot(el, children) }
+        : {}),
+      onAfterRender: () => _runAfterRenders(el, lc),
+    },
+  )
   return {
     dispose(): void {
       inner.dispose()
@@ -170,6 +182,7 @@ interface _LC {
   m: Array<() => void | (() => void)>
   a: Array<() => void>
   ac: Array<(name: string, oldValue: string | null, newValue: string | null) => void>
+  r: Array<() => void>
 }
 let _cur: _LC | null = null
 
@@ -201,6 +214,12 @@ function _runMounts(lc: _LC): void {
     const r = fn()
     if (r) onScopeDispose(r as () => void)
   }
+}
+
+/** A disposer called by one callback must not skip its registered siblings. */
+function _runAfterRenders(el: HTMLElement, lc: _LC): void {
+  if (!_componentScopes.get(el)?.active) return
+  for (const fn of [...lc.r]) if (lc.r.includes(fn)) fn()
 }
 
 function _runAdopts(lc: _LC): void {
@@ -538,7 +557,7 @@ export function defineComponent(setupOrOptions: Setup | ComponentOptions): typeo
        * tree without calling _mount. Called by define-element's hydration
        * branch via the `_build?()` check. */
       _build(): ReturnType<Setup> {
-        const lc: _LC = { m: [], a: [], ac: [] }
+        const lc: _LC = { m: [], a: [], ac: [], r: [] }
         this[LC_SYM] = lc
         const host = this.shadowRoot ?? this
         // Component root scope — DETACHED (effect-scope plan §2). Element↔
@@ -656,7 +675,7 @@ export function defineComponent(setupOrOptions: Setup | ComponentOptions): typeo
               // Adopt: wire effects onto the server's DOM instead of rebuilding.
               // Everything after this branch is byte-identical to the mount
               // path, so onMount, scope registration and teardown are shared.
-              scope = _adoptSsrTemplate(this, tree!, host)
+              scope = _adoptSsrTemplate(this, tree!, host, lc)
             } else {
               // Marked but unadoptable (shadow mode with an EMPTY root — the
               // server emitted the tree as light children with no declarative
@@ -675,7 +694,10 @@ export function defineComponent(setupOrOptions: Setup | ComponentOptions): typeo
                 this.replaceChildren()
                 if (host !== this) host.replaceChildren()
               }
-              scope = ab ? _mount(tree!, host, { agentBinding: ab }) : _mount(tree!, host)
+              scope = _mount(tree!, host, {
+                ...(ab ? { agentBinding: ab } : {}),
+                onAfterRender: () => _runAfterRenders(this, lc),
+              })
             }
             this[S] = scope
             _scopes.set(this, scope)
@@ -948,7 +970,7 @@ export function defineComponent(setupOrOptions: Setup | ComponentOptions): typeo
       // themselves) and we don't replay a stale pre-connect value.
       this[PENDING_SYM] = undefined
 
-      const lc: _LC = { m: [], a: [], ac: [] }
+      const lc: _LC = { m: [], a: [], ac: [], r: [] }
       this[LC_SYM] = lc
       const host = this.shadowRoot ?? this
       // Component root scope — DETACHED; es.run wraps ONLY the setup call
@@ -1038,13 +1060,16 @@ export function defineComponent(setupOrOptions: Setup | ComponentOptions): typeo
           const adoptable = isLightDom || _hasDeclarativeShadowTemplate(this)
           let scope: _ScopeRef
           if (ssrTemplate && adoptable && _hydrate !== null && !ab) {
-            scope = _adoptSsrTemplate(this, tree!, host)
+            scope = _adoptSsrTemplate(this, tree!, host, lc)
           } else {
             if (ssrTemplate) {
               this.replaceChildren()
               if (host !== this) host.replaceChildren()
             }
-            scope = ab ? _mount(tree!, host, { agentBinding: ab }) : _mount(tree!, host)
+            scope = _mount(tree!, host, {
+              ...(ab ? { agentBinding: ab } : {}),
+              onAfterRender: () => _runAfterRenders(this, lc),
+            })
           }
           this[S] = scope
           _scopes.set(this, scope)
@@ -1258,7 +1283,7 @@ export function _hmrReplace(element: HTMLElement, newSetup: Setup): void {
   // replacement scope too, so `ctx.connected`/`onCommit` keep working
   // across an HMR replace exactly as they do across a real reconnect.
   const connected = _installLifecycle(element, es)
-  const lc: _LC = { m: [], a: [], ac: [] }
+  const lc: _LC = { m: [], a: [], ac: [], r: [] }
   ;(element as unknown as Record<symbol, unknown>)[LC_SYM] = lc
   try {
     _cur = lc
@@ -1350,6 +1375,26 @@ export function _onCommit(fn: () => void | (() => void)): void {
   const host = getLifecycleHost()
   if (host === undefined) throw new RuntimeError('SCR-R0014', 'no owner')
   host.onCommit(fn)
+}
+
+/** Register a callback after every Arbor DOM patch in this component. */
+export function _onAfterRender(fn: () => void): () => void {
+  if (!_cur) {
+    if (_inSsrLifecycle()) return () => {}
+    throw new RuntimeError('SCR-R0010', 'no owner')
+  }
+  const callbacks = _cur.r
+  const entry = (): void => fn()
+  callbacks.push(entry)
+  let active = true
+  const dispose = (): void => {
+    if (!active) return
+    active = false
+    const index = callbacks.indexOf(entry)
+    if (index !== -1) callbacks.splice(index, 1)
+  }
+  onScopeDispose(dispose)
+  return dispose
 }
 
 // Unified into the component scope (effect-scope plan §2): onCleanup routes
