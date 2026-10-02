@@ -25,6 +25,7 @@ export {
   _onCleanup as onCleanup,
   _onCommit as onCommit,
   _onMount as onMount,
+  _onAfterRender as onAfterRender,
   // @internal — reused by `@aihu/arbor`'s top-level hydrate walk (aihu-runtime#4)
   _projectLightDomSlot,
   _setHydrate,

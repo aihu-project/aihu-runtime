@@ -1,5 +1,12 @@
 # @aihu/runtime
 
+## 6.2.0
+
+### Minor Changes
+
+- Add `onAfterRender(fn)` for component-scoped callbacks after Arbor commits a DOM patch, including initial render. The returned disposer unregisters the callback, disconnect stops future callbacks, and server rendering remains a no-op. Runtime integration requires `@aihu/arbor` 4.2.0 or newer.
+- Pass the runtime's light-DOM slot projector into Arbor's top-level hydration hook so adopted server templates project their original light children after hydration.
+
 ## 6.1.1
 
 ### Patch Changes
