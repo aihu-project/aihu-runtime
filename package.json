@@ -32,6 +32,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:release-contract": "node scripts/injected-dist-regression.mjs && node scripts/npm-credential-regression.mjs",
+    "bench:connected-callback-batch": "node bench/connected-callback-batch.bench.mjs",
     "release:contract": "node scripts/release-contract.mjs",
     "prepublishOnly": "npm run build"
   },
