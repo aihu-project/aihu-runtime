@@ -21,7 +21,7 @@ npm install @aihu/runtime
 bun add @aihu/runtime
 ```
 
-<sub><i>Package version `@aihu/runtime@6.1.1`.</i></sub>
+<sub><i>Package version `@aihu/runtime@6.2.0`.</i></sub>
 
 <!-- END_AUTOGEN: install -->
 
@@ -32,13 +32,13 @@ bun add @aihu/runtime
 
 | | |
 |---|---|
-| **Version** | `6.1.1` |
+| **Version** | `6.2.0` |
 | **Tier** | A — Reactive runtime core — custom-element wiring for compiled SFCs |
 | **Bundle size** | 4.62 kB (gz) — limit 4750 B |
 | **Published files** | 3 entries |
 | **License** | MIT |
 
-<sub><i>Package version `@aihu/runtime@6.1.1`.</i></sub>
+<sub><i>Package version `@aihu/runtime@6.2.0`.</i></sub>
 
 <!-- END_AUTOGEN: stats -->
 
@@ -53,7 +53,7 @@ bun add @aihu/runtime
 | `./ssr` | `./dist/ssr-string.js` | `—` |
 | `./app` | `./dist/app.js` | `—` |
 
-<sub><i>Package version `@aihu/runtime@6.1.1`.</i></sub>
+<sub><i>Package version `@aihu/runtime@6.2.0`.</i></sub>
 
 <!-- END_AUTOGEN: exports -->
 
@@ -68,11 +68,11 @@ bun add @aihu/runtime
 
 **Peer dependencies:**
 
-- `@aihu/arbor` — `^4.1.2`
+- `@aihu/arbor` — `^4.2.0`
 - `@aihu/signals` — `^0.5.1`
 - `@aihu/context` — `^0.2.0`
 
-<sub><i>Package version `@aihu/runtime@6.1.1`.</i></sub>
+<sub><i>Package version `@aihu/runtime@6.2.0`.</i></sub>
 
 <!-- END_AUTOGEN: deps -->
 
@@ -85,7 +85,7 @@ bun add @aihu/runtime
 - [@aihu/compiler](https://github.com/aihu-project/aihu-compiler)
 - [Aihu framework root](https://github.com/aihu-project/aihu)
 
-<sub><i>Package version `@aihu/runtime@6.1.1`.</i></sub>
+<sub><i>Package version `@aihu/runtime@6.2.0`.</i></sub>
 
 <!-- END_AUTOGEN: see-also -->
 
@@ -96,7 +96,7 @@ bun add @aihu/runtime
 
 MIT — see [LICENSE](LICENSE).
 
-<sub><i>Package version `@aihu/runtime@6.1.1`.</i></sub>
+<sub><i>Package version `@aihu/runtime@6.2.0`.</i></sub>
 
 <!-- END_AUTOGEN: license -->
 
@@ -104,7 +104,7 @@ MIT — see [LICENSE](LICENSE).
 
 Merge the reviewed change to `main`, update the package version, and verify the
 default branch locally. Then create and push the exact annotated tag
-`runtime-v<package.version>` (for example, `runtime-v6.1.1`). The release
+`runtime-v<package.version>` (for example, `runtime-v6.2.0`). The release
 workflow rejects tags that do not point at the current `main` commit, checks
 that npm returns `E404` for the target version, and publishes the one verified
 tarball with npm provenance through GitHub OIDC. Do not publish from a local
